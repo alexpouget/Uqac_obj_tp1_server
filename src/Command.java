@@ -15,10 +15,12 @@ public class Command implements Serializable {
     private String command;
     private String identificator;
     private String function;
-    private List<Map<String,String>> typeValue;
+    private List<String> types;
+    private List<Object> values;
 
     public Command() {
-        typeValue = new ArrayList<>();
+        types = new ArrayList<>();
+        values = new ArrayList<>();
     }
 
     public String getCommand() {
@@ -45,18 +47,31 @@ public class Command implements Serializable {
         this.function = function;
     }
 
-    public List<Map<String, String>> getTypeValue() {
-        return typeValue;
+    public List<String> getTypes() {
+        return types;
     }
 
-    public void setTypeValue(List<Map<String, String>> typeValue) {
-        this.typeValue = typeValue;
+    public void setTypes(List<String> types) {
+        this.types = types;
     }
 
-    public void addTypeValue(String type,String value) {
-        Map<String,String> map = new HashMap<>();
-        map.put("type",type);
-        map.put("value",value);
-        typeValue.add(map);
+    public List<Object> getValues() {
+        return values;
+    }
+
+    public void setValues(List<Object> object) {
+        this.values = object;
+    }
+
+    public void addTypes(String s) {
+        if(null != this.types) {
+            this.types.add(s);
+        }
+    }
+
+    public void addValues(Object s) {
+        if(null != this.values) {
+            this.values.add(s);
+        }
     }
 }

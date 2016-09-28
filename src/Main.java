@@ -11,11 +11,77 @@ public class Main {
            */
     public static void main(String[] args) {
         System.out.println("Server Part");
-        Scanner reader = new Scanner(System.in);  // Reading from System.in
+        Scanner reader = new Scanner(System.in);
         System.out.println("Port number: ");
         int portNumber = reader.nextInt();
         ServerApplication server = new ServerApplication(portNumber);
         System.out.println("server instance Ok");
-        server.order();
+        //server.order();
+        Command c = new Command();
+        c.setCommand("chargement");
+        c.setIdentificator("ca.uqac.registraire.Cours");
+        server.command(c);
+        c.setCommand("creation");
+        c.setIdentificator("ca.uqac.registraire.Cours");
+        c.setFunction("8inf853");
+        server.command(c);
+        c.setCommand("ecriture");
+        c.setIdentificator("8inf853");
+        c.setFunction("titre");
+        c.addValues("Architecture des applications");
+        server.command(c);
+        c.setCommand("lecture");
+        c.setIdentificator("8inf853");
+        c.setFunction("titre");
+        server.command(c);
+
+        c.setCommand("chargement");
+        c.setIdentificator("ca.uqac.registraire.Etudiant");
+        server.command(c);
+        c.setCommand("creation");
+        c.setIdentificator("ca.uqac.registraire.Etudiant");
+        c.setFunction("mathilde");
+        server.command(c);
+        c = new Command();
+        c.setCommand("ecriture");
+        c.setIdentificator("mathilde");
+        c.setFunction("nom");
+        c.addValues("Mathilde Boivin");
+        server.command(c);
+
+        //ecriture#mathilde#nom#Mathilde Boivin
+
+        /*Command c1 = new Command();
+        c1.setCommand("fonction");
+        c1.setIdentificator("8inf853");
+        c1.setFunction("getNote");
+        c1.addTypes("ca.uqac.registraire.Etudiant");
+        c1.addValues("mathilde");
+        server.command(c1);*/
+
+        Command c1 = null;
+        c1 = new Command();
+        c1.setCommand("fonction");
+        c1.setIdentificator("mathilde");
+        c1.setFunction("inscrisDansCours");
+        c1.addTypes("ca.uqac.registraire.Cours");
+        c1.addValues("8inf853");
+        server.command(c1);
+
+
+        c1 = new Command();
+        c1.setCommand("fonction");
+        c1.setIdentificator("8inf853");
+        c1.setFunction("getNote");
+        c1.addTypes("ca.uqac.registraire.Etudiant");
+        c1.addValues("mathilde");
+        server.command(c1);
+
+        //fonction#mathilde#inscrisDansCours#ca.uqac.registraire.Cours:ID(8inf853)
+        //fonction#8inf853#getNote#ca.uqac.registraire.Etudiant:ID(mathilde)
+        //server.compile("/volumes/Transcend/Downloads/tp1/Cours.java /volumes/Transcend/Downloads/tp1/Etudiant.java");
+       // server.load("ca.uqac.registraire.Etudiant");
+
+
     }
 }
