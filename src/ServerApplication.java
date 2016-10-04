@@ -1,17 +1,12 @@
-import com.sun.tools.javac.jvm.ClassWriter;
-import com.sun.tools.javac.resources.compiler;
+import com.company.Command;
 
-import javax.tools.*;
-import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.*;
-import java.nio.file.Files;
 import java.util.*;
-import java.util.List;
 
 /**
  * Created by alex on 19/09/2016.
@@ -19,8 +14,10 @@ import java.util.List;
 public class ServerApplication {
     private ServerSocket serverSocket;
     private Socket socketConnection;
+    private String compilationFolder;
     private Map<String,Class> myClass;
     private Map<String,Object> myObjects;
+    private URLClassLoader classLoader;
     /**
            * prend le numéro de port, crée un SocketServer sur le port
           */
@@ -63,27 +60,22 @@ public class ServerApplication {
     public void command(Command command) {
         switch (command.getCommand()){
             case "lecture":
-                //get the object
                 read(myObjects.get(command.getIdentificator()),command.getFunction());
                 break;
             case "chargement":
-                //get the object
                 load(command.getIdentificator());
                 break;
             case "creation":
-                //get the object
                 create(myClass.get(command.getIdentificator()),command.getFunction());
                 break;
             case "ecriture":
-                //get the object
                 write(myObjects.get(command.getIdentificator()),command.getFunction(),command.getValues().get(0));
                 break;
             case "compilation":
-                //get the object
+                compilationFolder = command.getFunction();
                 compile(command.getIdentificator());
                 break;
             case "fonction":
-                //get the object
                 String[] types = new String[command.getTypes().size()];
                 types = command.getTypes().toArray(types);
 
@@ -91,7 +83,12 @@ public class ServerApplication {
                         command.getValues().toArray());
                 break;
             default:
-                System.out.println("fermeture du socket server");
+                retour("fermeture du socket server");
+                try {
+                    serverSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
 
         }
@@ -102,6 +99,7 @@ public class ServerApplication {
      * socket
            */
     public void read(Object _object, String attribut) {
+        Object value = null;
         try {
             Field field = _object.getClass().getDeclaredField(attribut);
             //error access
@@ -110,7 +108,7 @@ public class ServerApplication {
                 call(_object,attribut,null,null);
             }
             else{
-                Object value = field.get(_object);
+                value = field.get(_object);
 
             }
         } catch (NoSuchFieldException e) {
@@ -118,7 +116,7 @@ public class ServerApplication {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-
+        retour(value.toString());
 
 
 
@@ -135,7 +133,7 @@ public class ServerApplication {
             //error access
             if(!field.isAccessible()){//if attribute is private
                 String method = "set"+ ( attribut.substring(0, 1).toUpperCase() + attribut.substring(1));
-                call(_object,method,new String[]{new String(value.getClass().toString())},new Object[]{value});
+                call(_object,method,new String[]{new String(value.getClass().getName())},new Object[]{value});
             }
             else{
               // if(field.getType().toString().equals("float")){
@@ -153,6 +151,7 @@ public class ServerApplication {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+        retour("ecriture ok");
     }
     /**
            * traiterCreation : traite la création d’un objet. Confirme au client que la création
@@ -175,7 +174,7 @@ public class ServerApplication {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-
+        retour("creation ok");
 
     }
 
@@ -186,7 +185,7 @@ public class ServerApplication {
 
     public void load(String path) {
         // url = ca.uqac.8inf853.Cours
-        File f = new File("/volumes/Transcend/Downloads/tp1/class/");
+        File f = new File(compilationFolder);
         URL url = null;
         try {
             url = f.toURI().toURL();
@@ -195,7 +194,7 @@ public class ServerApplication {
         }
 
         URL[] urls = new URL[]{url};
-        URLClassLoader classLoader = new URLClassLoader(urls);
+        classLoader = new URLClassLoader(urls);
 
         Class _class = null;
         try {
@@ -205,6 +204,7 @@ public class ServerApplication {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+        retour("chargement ok");
     }
         /**
      * traiterCompilation : traite la compilation d’un fichier source java. Confirme au client
@@ -213,19 +213,20 @@ public class ServerApplication {
            */
      public void compile(String pathFile) {
 
-         File f = new File("/volumes/Transcend/Downloads/tp1/class");
+         File f = new File(compilationFolder);
          f.mkdir();
 
          pathFile = pathFile.replace(","," ");
 
          Runtime rt = Runtime.getRuntime();
          try {
-             System.out.println("javac -d "+"/volumes/Transcend/Downloads/tp1/class "+pathFile);
-             rt.exec("javac -d /volumes/Transcend/Downloads/tp1/class "+pathFile);
+             System.out.println("javac -d "+compilationFolder+" "+pathFile);
+             rt.exec("javac -d "+compilationFolder+" "+pathFile);
 
          } catch (IOException e) {
              e.printStackTrace();
          }
+         retour("compilation ok");
      }
 
     /**
@@ -235,39 +236,50 @@ public class ServerApplication {
      * fonction est renvoyé par le serveur au client (ou le message que tout s’est bien
      * passé)
            */
-     public void call(Object _objet, String nameFunction, String[] types,
+     public void call(Object _object, String nameFunction, String[] types,
      Object[] valeurs) {
-         Class<?> _class = _objet.getClass();
+         Object result = null;
+         Class<?> _class = _object.getClass();
          Method method = null;
+
          try {
              if (types != null) {
-                 if(null!=myClass.get(types[0])){ //find object in myClass
-                     Class c = myClass.get(types[0]);
-                     Object objectValeur = myObjects.get(valeurs[0]);
-                     Class[] cArg = new Class[1];
-                     cArg[0] = c;
-                     method = _class.getMethod(nameFunction, cArg);
-                     Object ret  = method.invoke(_objet, c.cast(objectValeur));
-                 }else{
-                    method = _class.getMethod(nameFunction, types[0].getClass());//pas bon
-                    Object ret  = method.invoke(_objet, valeurs);
+                 System.out.println("Appel de la methode:" + nameFunction);
+                 Class[] t = new Class[types.length];
+
+                 for(int i = 0; i < types.length; i++){
+                     String nameClass = "";
+                     nameClass = (((String)types[i]).indexOf(".")>0?"":"java.lang.") + (String)types[i];
+                     t[i] = (Class) classLoader.loadClass(nameClass);
+
+                     //------------------------------------------------------*/
                  }
+                 Class classObject = (Class)classLoader.loadClass(_object.getClass().getName());
+                 Method m = classObject.getMethod(nameFunction, t);
+                 result = m.invoke(classObject.cast(_object), valeurs);
 
              }else{
                  method = _class.getMethod(nameFunction);
-                 Object ret = method.invoke(_objet);
-                 System.out.println(ret.toString());
+                 result = method.invoke(_object);
+                 System.out.println(result.toString());
              }
 
          } catch (NoSuchMethodException e) {
-             System.out.println("la methode n'existe pas");
+             retour("la methode n'existe pas");
              e.printStackTrace();
          } catch (InvocationTargetException e) {
              e.printStackTrace();
          } catch (IllegalAccessException e) {
              e.printStackTrace();
+         } catch (ClassNotFoundException e) {
+             e.printStackTrace();
          }
 
+         if(null == result) {
+             retour("Call ok");
+         }else{
+             retour(result.toString());
+         }
 
      }
 
@@ -275,9 +287,12 @@ public class ServerApplication {
         //retour
         try {
             ObjectOutputStream outToServer = new ObjectOutputStream(socketConnection.getOutputStream());
-
             //Send command to server
-            outToServer.writeObject(retour);
+
+            outToServer.writeUTF(retour);
+            outToServer.flush();
+            outToServer.close();
+            socketConnection.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

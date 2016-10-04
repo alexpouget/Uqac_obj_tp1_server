@@ -1,3 +1,5 @@
+import com.company.Command;
+
 import java.net.ServerSocket;
 import java.util.Scanner;
 
@@ -16,8 +18,13 @@ public class Main {
         int portNumber = reader.nextInt();
         ServerApplication server = new ServerApplication(portNumber);
         System.out.println("server instance Ok");
-        //server.order();
-        Command c = new Command();
+        server.order();
+        /*Command c = new Command();
+        c.setCommand("compilation");
+        c.setIdentificator("./ressource/Cours.java ./ressource/Etudiant.java");
+        c.setFunction("./classes");
+        server.command(c);
+        c = new Command();
         c.setCommand("chargement");
         c.setIdentificator("ca.uqac.registraire.Cours");
         server.command(c);
@@ -59,28 +66,23 @@ public class Main {
         c1.addValues("mathilde");
         server.command(c1);*/
 
-        Command c1 = null;
+        /*Command c1 = null;
         c1 = new Command();
         c1.setCommand("fonction");
-        c1.setIdentificator("mathilde");
-        c1.setFunction("inscrisDansCours");
-        c1.addTypes("ca.uqac.registraire.Cours");
-        c1.addValues("8inf853");
+        c1.setIdentificator("8inf853");
+        c1.setFunction("ajouteEtudiant");
+        c1.addTypes("ca.uqac.registraire.Etudiant");
+        c1.addValues("mathilde");
         server.command(c1);
 
-
+/*
         c1 = new Command();
         c1.setCommand("fonction");
         c1.setIdentificator("8inf853");
         c1.setFunction("getNote");
         c1.addTypes("ca.uqac.registraire.Etudiant");
         c1.addValues("mathilde");
-        server.command(c1);
-
-        //fonction#mathilde#inscrisDansCours#ca.uqac.registraire.Cours:ID(8inf853)
-        //fonction#8inf853#getNote#ca.uqac.registraire.Etudiant:ID(mathilde)
-        //server.compile("/volumes/Transcend/Downloads/tp1/Cours.java /volumes/Transcend/Downloads/tp1/Etudiant.java");
-       // server.load("ca.uqac.registraire.Etudiant");
+        server.command(c1);*/
 
 
     }
